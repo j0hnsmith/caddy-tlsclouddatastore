@@ -234,7 +234,7 @@ func (cds *CloudDsStorage) TryLock(domain string) (caddytls.Waiter, error) {
 	cds.domainLocks[domain] = wg
 
 	if time.Until(r.Lock).Nanoseconds() > 0 {
-		// r.Lock is in the future, already locked globally
+		// global r.Lock is in the future, already locked globally
 
 		go func() {
 			// check on lock periodically
