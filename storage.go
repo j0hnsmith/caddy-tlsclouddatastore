@@ -245,12 +245,18 @@ func (cds *CloudDsStorage) TryLock(domain string) (caddytls.Waiter, error) {
 					if err != nil {
 						// can't return error to caller, all we can do is remove the local lock
 						wg.Done()
+						cds.domainLocksMu.Lock()
+						defer cds.domainLocksMu.Unlock()
+						delete(cds.domainLocks, domain)
 						return
 					}
 					if time.Until(r.Lock).Nanoseconds() > 0 {
 						// still locked
 					} else {
 						wg.Done()
+						cds.domainLocksMu.Lock()
+						defer cds.domainLocksMu.Unlock()
+						delete(cds.domainLocks, domain)
 						return
 					}
 				}
