@@ -38,7 +38,7 @@ In order to use Cloud Datastore you have to change the storage provider in your 
 
 ### Env vars
 
-- `CADDY_CLOUDDATASTORETLS_PROJECT_ID` GCP project id (not name), required.
+- `DATASTORE_PROJECT_ID` GCP project id (not name), required.
 - `CADDY_CLOUDDATASTORETLS_SERVICE_ACCOUNT_FILE` the full path to service account json key file  ([create service account](https://console.developers.google.com/permissions/serviceaccounts) with Datastore -> Cloud Datastore User role), required. 
 - `CADDY_CLOUDDATASTORETLS_B64_AESKEY` defines your personal AES key to use when encrypting data, generate with `openssl rand -base64 32` or similar (don't use a string), defaults to an insecure key. 
 - `CADDY_CLOUDDATASTORETLS_PREFIX` defines the prefix for the keys, default is `caddytls`.

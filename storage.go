@@ -34,7 +34,7 @@ const (
 	// EnvNamePrefix defines the env variable name to override key prefix
 	EnvNamePrefix = "CADDY_CLOUDDATASTORETLS_PREFIX"
 
-	EnvNameProjectId = "CADDY_CLOUDDATASTORETLS_PROJECT_ID" // id, not name
+	EnvNameProjectId = "DATASTORE_PROJECT_ID" // id, not name
 
 	// Create a service account at https://console.developers.google.com/permissions/serviceaccounts
 	// with a Datastore -> Cloud Datastore User role, then create and download a json key for the service account.
