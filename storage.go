@@ -17,7 +17,6 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/mholt/caddy/caddytls"
-	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -127,6 +126,11 @@ func (cds *CloudDsStorage) siteKey(domain string) string {
 
 func (cds *CloudDsStorage) userKey(email string) string {
 	return cds.key(path.Join("users", email))
+}
+
+func (cds *CloudDsStorage) emailFromKey(key *datastore.Key) string {
+	_, email := path.Split(key.Name)
+	return email
 }
 
 // SiteExists checks if a cert for a specific domain already exists
@@ -341,14 +345,10 @@ func (cds *CloudDsStorage) MostRecentUserEmail() string {
 	ctx := context.TODO()
 	for it := cds.cloudDsClient.Run(ctx, q); ; {
 		key, err := it.Next(nil)
-		if err == iterator.Done {
-			email = key.Name
-			break
+		if key != nil && err == nil {
+			email = cds.emailFromKey(key)
 		}
-		if err != nil {
-			// no way of propagating error, what else can we do?
-			return email
-		}
+		break // zero or one results, break regardless
 	}
 
 	return email
