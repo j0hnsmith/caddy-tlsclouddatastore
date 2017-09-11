@@ -51,22 +51,25 @@ func init() {
 
 // NewCloudDatastoreStorage connects to cloud datastore and returns a caddytls.Storage for the specific caURL
 func NewCloudDatastoreStorage(caURL *url.URL) (caddytls.Storage, error) {
-
-	ctx := context.Background()
-
 	projectID := os.Getenv(EnvNameProjectId)
 	if projectID == "" {
 		return nil, fmt.Errorf("Unable read project id from env var: %s", EnvNameProjectId)
 	}
-	sAcctPath := os.Getenv(EnvNameServiceAccountPath)
-	if sAcctPath == "" {
-		return nil, fmt.Errorf("Unable read service account path from env var: %s", EnvNameServiceAccountPath)
+
+	ctx := context.Background()
+
+	var o []option.ClientOption
+
+	if addr := os.Getenv("DATASTORE_EMULATOR_HOST"); addr == "" {
+
+		sAcctPath := os.Getenv(EnvNameServiceAccountPath)
+		if sAcctPath == "" {
+			return nil, fmt.Errorf("Unable read service account path from env var: %s", EnvNameServiceAccountPath)
+		}
+		o = append(o, option.WithCredentialsFile(sAcctPath))
 	}
 
-	var err error
-
-	// Creates a client.
-	cloudDsClient, err := datastore.NewClient(ctx, projectID, option.WithCredentialsFile(sAcctPath))
+	cloudDsClient, err := datastore.NewClient(ctx, projectID, o...)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create Cloud Datastore client: %v", err)
 	}
