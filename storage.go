@@ -26,7 +26,7 @@ const (
 	DefaultPrefix = "caddytls"
 
 	// DefaultAESKeyB64 32 bytes when decoded
-	DefaultAESKeyB64 = "Y29uc3VsdGxzLTEyMzQ1Njc4OTAtY2FkZHl0bHMtMzIK"
+	DefaultAESKeyB64 = "Y29uc3VsdGxzLTEyMzQ1Njc4OTAtY2FkZHl0bHMtMzI="
 
 	// EnvNameAESKey defines the env variable name to override AES key, create with `openssl rand -base64 32` or similar
 	EnvNameAESKey = "CADDY_CLOUDDATASTORETLS_B64_AESKEY"
