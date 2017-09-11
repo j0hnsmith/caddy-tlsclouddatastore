@@ -10,6 +10,8 @@ import (
 
 	"os"
 
+	"time"
+
 	"cloud.google.com/go/datastore"
 	"github.com/hashicorp/consul/api"
 	"github.com/j0hnsmith/caddy-tlsclouddatastore"
@@ -150,5 +152,140 @@ func TestStoreAndLoadSite(t *testing.T) {
 	site, err = gds.LoadSite("tls.test.com")
 	if site != nil {
 		t.Fatal("Site should be deleted")
+	}
+}
+
+func TestStoreAndSiteExists(t *testing.T) {
+	gds := setupStorage(t)
+
+	defaultSite := getSite()
+	domain := "tls.test.com"
+	err := gds.StoreSite("tls.test.com", defaultSite)
+	if err != nil {
+		t.Fatalf("Error storing site: %v", err)
+	}
+
+	exists, err := gds.SiteExists(domain)
+	if err != nil {
+		t.Fatalf("Error checking if site exists: %v", err)
+	}
+	if !exists {
+		t.Fatalf("Site should exist but doesn't: %s", domain)
+	}
+}
+
+func TestSimpleLockUnlock(t *testing.T) {
+	gds := setupStorage(t)
+	domain := "tls.test.com"
+	wg, err := gds.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wg != nil {
+		t.Fatal("We should get lock, instead got WaitGroup")
+	}
+
+	err = gds.Unlock(domain)
+	if err != nil {
+		t.Fatalf("Error when unlocking: %v", err)
+	}
+}
+
+func TestMultiLockUnlock(t *testing.T) {
+	gds := setupStorage(t)
+	domain := "tls.test.com"
+
+	// get lock
+	wg, err := gds.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wg != nil {
+		t.Fatal("We should get lock, instead got WaitGroup")
+	}
+
+	go func() {
+		select {
+		case <-time.After(time.Second * 1):
+			err = gds.Unlock(domain)
+			if err != nil {
+				t.Fatalf("Error when unlocking: %v", err)
+			}
+		}
+	}()
+
+	// try to get lock again, we should get wg instead
+	wg1, err := gds.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wg1 == nil {
+		t.Fatal("We should get WaitGroup")
+	}
+
+	wg1.Wait() // wait until lock released
+
+	// we should be able to get the lock now without waiting
+	wg2, err := gds.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wg2 != nil {
+		t.Fatal("We should get lock, instead got WaitGroup")
+	}
+
+	err = gds.Unlock(domain)
+	if err != nil {
+		t.Fatalf("Error when unlocking: %v", err)
+	}
+}
+
+func TestDistributedLockUnlock(t *testing.T) {
+	gds1 := setupStorage(t)
+	gds2 := setupStorage(t)
+	domain := "tls.test.com"
+
+	// get lock with first client
+	wgGds1_1, err := gds1.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wgGds1_1 != nil {
+		t.Fatal("We should get lock, instead got WaitGroup")
+	}
+
+	go func() {
+		select {
+		case <-time.After(time.Second * 1):
+			err = gds1.Unlock(domain)
+			if err != nil {
+				t.Fatalf("Error when unlocking: %v", err)
+			}
+		}
+	}()
+
+	// try to get lock again (with different client), we should get a WaitGroup instead
+	wgGds2_1, err := gds2.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wgGds2_1 == nil {
+		t.Fatal("We should get WaitGroup")
+	}
+
+	wgGds2_1.Wait() // wait until lock released
+
+	// we should be able to get the lock now without waiting
+	wgGds2_2, err := gds2.TryLock(domain)
+	if err != nil {
+		t.Fatalf("Error when locking: %v", err)
+	}
+	if wgGds2_2 != nil {
+		t.Fatal("We should get lock, instead got WaitGroup")
+	}
+
+	err = gds2.Unlock(domain)
+	if err != nil {
+		t.Fatalf("Error when unlocking: %v", err)
 	}
 }
