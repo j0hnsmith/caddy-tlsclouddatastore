@@ -92,18 +92,19 @@ func TestMostRecentUserEmail(t *testing.T) {
 	}
 
 	gds.StoreUser("test@test.com", getUser())
-	time.Sleep(time.Millisecond * 2) // emulator seems to be eventually consistent
+	time.Sleep(time.Millisecond * 5) // emulator seems to be eventually consistent
 
 	email = gds.MostRecentUserEmail()
 	if email != "test@test.com" {
 		t.Fatalf("'%s' doesn't match 'test@test.com'", email)
 	}
 
-	gds.StoreUser("test2@test.com", getUser())
-	time.Sleep(time.Millisecond * 2) // emulator seems to be eventually consistent
+	newUser := "test2@test.com"
+	gds.StoreUser(newUser, getUser())
+	time.Sleep(time.Millisecond * 5) // emulator seems to be eventually consistent
 	email = gds.MostRecentUserEmail()
-	if email != "test2@test.com" {
-		t.Fatalf("email should be the newest user but found %s", email)
+	if email != newUser {
+		t.Fatalf("email should be the newest user %s but found %s", newUser, email)
 	}
 
 }
