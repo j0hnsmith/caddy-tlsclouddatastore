@@ -40,9 +40,14 @@ const (
 	// This env var is the full path to the json key file
 	EnvNameServiceAccountPath = "CADDY_CLOUDDATASTORETLS_SERVICE_ACCOUNT_FILE"
 
-	SITE_RECORD = "caddytlsSiteRecord"
-	USER_RECORD = "caddytlsUserRecord"
+	SITE_RECORD             = "caddytlsSiteRecord"
+	USER_RECORD             = "caddytlsUserRecord"
+	MOST_RECENT_USER_RECORD = "caddytlsMostRecentUserRecord"
 )
+
+type mostRecentUser struct {
+	Email string
+}
 
 func init() {
 	caddytls.RegisterStorageProvider("cloud-datastore", NewCloudDatastoreStorage)
@@ -126,6 +131,10 @@ func (cds *CloudDsStorage) siteKey(domain string) string {
 
 func (cds *CloudDsStorage) userKey(email string) string {
 	return cds.key(path.Join("users", email))
+}
+
+func (cds *CloudDsStorage) mostRecentUserKey() string {
+	return cds.key("most-recent-user")
 }
 
 func (cds *CloudDsStorage) emailFromKey(key *datastore.Key) string {
@@ -332,30 +341,41 @@ func (cds *CloudDsStorage) StoreUser(email string, data *caddytls.UserData) erro
 		return fmt.Errorf("Unable to encode user data for %v: %v", email, err)
 	}
 
-	ctx := context.TODO()
-	if _, err = cds.cloudDsClient.Put(ctx, k, r); err != nil {
+	if _, err = cds.cloudDsClient.Put(context.TODO(), k, r); err != nil {
 		return fmt.Errorf("Unable to store user data for %v: %v", email, err)
+	}
+
+	// store/update most recent user
+	ruk := datastore.NameKey(MOST_RECENT_USER_RECORD, cds.mostRecentUserKey(), nil)
+	ru := new(cdsEncryptedRecord)
+	ru.Modified = time.Now()
+
+	if ru.Value, err = cds.toBytes(&mostRecentUser{Email: email}); err != nil {
+		return fmt.Errorf("Unable to encode most recent user for %v: %v", email, err)
+	}
+
+	if _, err = cds.cloudDsClient.Put(context.TODO(), ruk, ru); err != nil {
+		return fmt.Errorf("Unable to store most recent user for %v: %v", email, err)
 	}
 
 	return nil
 }
 
-// MostRecentUserEmail returns the last modified email address from cloud datastore
+// MostRecentUserEmail returns the last modified Email address from cloud datastore.
 func (cds *CloudDsStorage) MostRecentUserEmail() string {
-	email := ""
-	q := datastore.NewQuery(USER_RECORD).
-		Order("-Modified").
-		Limit(1).
-		KeysOnly()
+	k := datastore.NameKey(MOST_RECENT_USER_RECORD, cds.mostRecentUserKey(), nil)
 
-	ctx := context.TODO()
-	for it := cds.cloudDsClient.Run(ctx, q); ; {
-		key, err := it.Next(nil)
-		if key != nil && err == nil {
-			email = cds.emailFromKey(key)
-		}
-		break // zero or one results, break regardless
+	r := new(cdsEncryptedRecord)
+	err := cds.cloudDsClient.Get(context.TODO(), k, r)
+
+	if err != nil {
+		return ""
 	}
 
-	return email
+	user := new(mostRecentUser)
+	if err := cds.fromBytes(r.Value, user); err != nil {
+		return ""
+	}
+
+	return user.Email
 }

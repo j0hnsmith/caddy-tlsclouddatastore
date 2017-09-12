@@ -49,7 +49,7 @@ func truncateDs(t *testing.T) {
 		t.Fatalf("Unable to create Cloud Datastore client: %v", err)
 	}
 
-	recordTypes := []string{tlsclouddatastore.USER_RECORD, tlsclouddatastore.SITE_RECORD}
+	recordTypes := []string{tlsclouddatastore.USER_RECORD, tlsclouddatastore.SITE_RECORD, tlsclouddatastore.MOST_RECENT_USER_RECORD}
 	for _, rt := range recordTypes {
 		q := datastore.NewQuery(rt).KeysOnly()
 		for it := cloudDsClient.Run(context.TODO(), q); ; {
@@ -92,7 +92,6 @@ func TestMostRecentUserEmail(t *testing.T) {
 	}
 
 	gds.StoreUser("test@test.com", getUser())
-	time.Sleep(time.Millisecond * 5) // emulator seems to be eventually consistent
 
 	email = gds.MostRecentUserEmail()
 	if email != "test@test.com" {
@@ -101,7 +100,6 @@ func TestMostRecentUserEmail(t *testing.T) {
 
 	newUser := "test2@test.com"
 	gds.StoreUser(newUser, getUser())
-	time.Sleep(time.Millisecond * 5) // emulator seems to be eventually consistent
 	email = gds.MostRecentUserEmail()
 	if email != newUser {
 		t.Fatalf("email should be the newest user %s but found %s", newUser, email)
