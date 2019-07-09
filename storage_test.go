@@ -15,7 +15,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"github.com/hashicorp/consul/api"
 	"github.com/j0hnsmith/caddy-tlsclouddatastore"
-	"github.com/mholt/caddy/caddytls"
+	"github.com/caddyserver/caddy/caddytls"
 	"google.golang.org/api/iterator"
 )
 

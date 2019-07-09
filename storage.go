@@ -16,7 +16,7 @@ import (
 	"encoding/base64"
 
 	"cloud.google.com/go/datastore"
-	"github.com/mholt/caddy/caddytls"
+	"github.com/caddyserver/caddy/caddytls"
 	"google.golang.org/api/option"
 )
 
