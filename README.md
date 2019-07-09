@@ -1,6 +1,6 @@
 # caddy-tlsclouddatastore
 
-[Google Cloud Datastore](https://cloud.google.com/datastore/docs/concepts/overview) storage for [Caddy](https://github.com/mholt/caddy) TLS data. 
+[Google Cloud Datastore](https://cloud.google.com/datastore/docs/concepts/overview) storage for [Caddy](https://github.com/caddyserver/caddy) TLS data. 
 
 Caddy usually uses a local filesystem to store TLS data when it auto-generates certificates from a CA like Lets Encrypt.
 With this plugin it is possible to use multiple Caddy instances with the same HTTPS domain, for instance with DNS round-robin or behind a load balancer, 
@@ -14,7 +14,7 @@ All data that is stored is encrypted using AES.
 You need to compile Caddy by yourself to use this plugin.
 
 - Set up a working Go installation, see https://golang.org/doc/install
-- Checkout Caddy source code from https://github.com/mholt/caddy
+- Checkout Caddy source code from https://github.com/caddyserver/caddy
 - Get latest caddy-tlsclouddatastore with `go get -u github.com/j0hnsmith/caddy-tlsclouddatastore`
 - Add this line to `caddy/caddymain/run.go` in the `import` region:
 ```go
@@ -45,5 +45,5 @@ In order to use Cloud Datastore you have to change the storage provider in your 
 
 ## Credits
 
-[caddy-tlsconsul](https://github.com/pteich/caddy-tlsconsul) provided inspiration, thanks also to Matt Holt for [Caddy](https://github.com/mholt/caddy).
+[caddy-tlsconsul](https://github.com/pteich/caddy-tlsconsul) provided inspiration, thanks also to Matt Holt for [Caddy](https://github.com/caddyserver/caddy).
 
